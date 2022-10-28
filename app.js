@@ -10,32 +10,30 @@ exports.getListings = getListings
  * @param {string} url the URL
  * @returns {object} an array with all the listings
  */
-function getListings(url) {
-    return new Promise((res, rej) => {
-        fetch(url)
-            .then(res => res.text())
-            .then(string => {
-                const temp = string.substr(string.indexOf('<script id="__NEXT_DATA__" type="application/json">') + '<script id="__NEXT_DATA__" type="application/json">'.length)
-                const result = JSON.parse(temp.substr(0, temp.indexOf('</script>')))
-                const returnArray = []
+async function getListings(url) {
+    const string = await (await fetch(url)).text();
 
-                result.props.pageProps.searchResult.advertSummaryList.advertSummary.forEach(returnObj => {
-                    returnObj.attributes.attribute.forEach(element => {
-                        returnObj[element.name.toLowerCase()] = isNaN(element.values[0]) ? element.values[0] : +element.values[0];
-                    })
+    const temp = string.substr(string.indexOf('<script id="__NEXT_DATA__" type="application/json">') + '<script id="__NEXT_DATA__" type="application/json">'.length);
+    const result = JSON.parse(temp.substr(0, temp.indexOf('</script>')));
+    const resultList = result.props.pageProps.searchResult.advertSummaryList.advertSummary;
+    const returnArray = [];
 
-                    // delete useless keys
-                    delete returnObj.attributes
-                    delete returnObj.contextLinkList
-                    delete returnObj.advertiserInfo
-                    delete returnObj.advertImageList
+    for (const returnObj of resultList) {
+        for (const element of returnObj.attributes.attribute) {
+            const v = element.values[0];
+            returnObj[element.name.toLowerCase()] = isNaN(v) ? v : +v;
+        }
 
-                    returnArray.push(returnObj)
-                })
+        // delete useless keys
+        delete returnObj.attributes
+        delete returnObj.contextLinkList
+        delete returnObj.advertiserInfo
+        delete returnObj.advertImageList
 
-                res(returnArray)
-            })
-    })
+        returnArray.push(returnObj)
+    }
+
+    return returnArray;
 }
 
 const categories = Object.freeze({
