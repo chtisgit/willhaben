@@ -101,7 +101,15 @@ class WillhabenSearch {
     }
 
     getURL() {
-        return `https://willhaben.at/iad/kaufen-und-verkaufen/marktplatz/-${this.searchCategory}?rows=${this.searchCount}${this.searchContition.length == 0 ? '' : '&treeAttributes=' + this.searchContition.join('&treeAttributes=')}${this.searchTransferType.length == 0 ? '' : '&treeAttributes=' + this.searchTransferType.join('&treeAttributes=')}${this.searchPayLivery ? '&paylivery=true' : ''}${this.searchKeyword ? `&keyword=${this.searchKeyword.split(' ').join('+')}` : ''}`
+        const params = new URLSearchParams([
+            ['rows', this.searchCount],
+            ...this.searchContition.concat(this.searchTransferType).map(n => 
+                ['treeAttributes', n]),
+            ['paylivery', this.searchPayLivery],
+            ['keyword', this.searchKeyword],
+        ]);
+
+        return `https://willhaben.at/iad/kaufen-und-verkaufen/marktplatz/-${this.searchCategory}?${params.toString()}`;
     }
 
     search() {
@@ -110,7 +118,7 @@ class WillhabenSearch {
 }
 
 module.exports = {
-    new: () => new WillhabenSearch,
+    default: new WillhabenSearch,
     getListings: getListings,
 
     // new constant names
