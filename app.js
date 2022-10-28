@@ -112,6 +112,13 @@ class WillhabenSearch {
 module.exports = {
     new: () => new WillhabenSearch,
     getListings: getListings,
+
+    // new constant names
+    TransferType: transferType,
+    Category: categories,
+    Condition: conditions,
+
+    // old constant names
     getTransferTypes: transferType,
     getCategories: categories,
     getConditions: conditions,
