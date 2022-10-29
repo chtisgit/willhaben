@@ -52,9 +52,10 @@ const transferType = Object.freeze({
 })
 
 class WillhabenSearch {
-    constructor(){
+    constructor(category = 0, keyword = null){
+        this.searchKeyword = keyword;
         this.searchCount = 1000
-        this.searchCategory = 0
+        this.searchCategory = category
         this.searchContition = []
         this.searchTransferType = []
         this.searchPayLivery = false
@@ -100,25 +101,74 @@ class WillhabenSearch {
         return this
     }
 
-    getURL() {
-        const params = new URLSearchParams([
+    getURL(page = 1) {
+        const params = [
             ['rows', this.searchCount],
             ...this.searchContition.concat(this.searchTransferType).map(n => 
                 ['treeAttributes', n]),
             ['paylivery', this.searchPayLivery],
-            ['keyword', this.searchKeyword],
-        ]);
+            ['page', page],
+        ];
+        if (this.searchKeyword)
+            params.push(['keyword', this.searchKeyword]);
 
-        return `https://willhaben.at/iad/kaufen-und-verkaufen/marktplatz/-${this.searchCategory}?${params.toString()}`;
+        const q =  new URLSearchParams(params);
+        const url = `https://willhaben.at/iad/kaufen-und-verkaufen/marktplatz/-${this.searchCategory}?${q.toString()}`;
+        // console.log(url);
+        return url;
     }
 
-    search() {
-        return getListings(this.getURL())
+    search(page = 1) {
+        return getListings(this.getURL(page));
+    }
+
+    results() {
+        return {
+            page: 0,
+            i: 0,
+            list: [],
+            search: this,
+            end: false,
+
+            [Symbol.asyncIterator]() {
+                return this;
+            },
+
+            async next() {
+                if (this.end) return { done: true };
+                if (this.i < this.list.length) {
+                    const value = this.list[this.i];
+                    this.i++;
+
+                    return { done: false, value: value };
+                }
+
+                this.page++;
+                try {
+                    this.search.searchCount = 10;
+                    this.list = await this.search.search(this.page);
+                } catch (err) {
+                    this.end = true;
+                    return { done: true };
+                }
+
+                if (this.list.length === 0) {
+                    this.end = true;
+                    return { done: true };
+                }
+
+                this.i = 1;
+                return {
+                    done: false,
+                    value: this.list[0],
+                };
+            },
+        };
     }
 }
 
 module.exports = {
-    default: new WillhabenSearch,
+    new: () => new WillhabenSearch,
     getListings: getListings,
 
     // new constant names

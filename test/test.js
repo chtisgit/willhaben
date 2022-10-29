@@ -10,6 +10,14 @@ describe('Willhaben API', () => {
         });
     });
 
+    it('should return 10 results', function (done) {
+        this.timeout(10000);
+        wh.getListings('https://willhaben.at/iad/kaufen-und-verkaufen/marktplatz/pc-komponenten-5878?rows=10').then(listings => {
+            assert.notEqual(listings.length, 0, "length of result is 0");
+            done();
+        });
+    });
+
     it('should generate an URL for searching soccer balls with paylivery option that returns up to 10 results', function(done) {
         this.timeout(10000);
 
@@ -21,7 +29,7 @@ describe('Willhaben API', () => {
             paylivery: true,
         };
 
-        let builder = wh.default
+        let builder = wh.new()
             .count(params.count)
             .category(params.category)
             .keyword(params.keyword)
@@ -52,5 +60,23 @@ describe('Willhaben API', () => {
 
         done();
     });
+
+    it('should verify that results() is an async iterator and some basic checks', async function () {
+        this.timeout(10000);
+
+        let builder2 = wh.new()
+            .category(wh.Category['sport-fussball'])
+            .keyword('wm')
+            .paylivery(true);
+
+        const all = builder2.results();
+        for await (const _ of all) {
+            // do smth
+        }
+        
+        assert.notEqual(all.page, 0, 'requested page must be at least 1')
+        assert.equal(all.end, true, 'iterator end must be set')
+    });
+
 
 });
